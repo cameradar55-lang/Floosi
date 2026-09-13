@@ -100,7 +100,7 @@ function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x){
   if(!Array.isArray(x.incomes)) x.incomes=[]; if(!Array.isArray(x.expenses)) x.expenses=[];
   if(!Array.isArray(x.debts)) x.debts=[]; if(!x.goal) x.goal=structuredClone(defaultData.goal);
   if(!Array.isArray(x.recurringIncomes)) x.recurringIncomes=[];
-  if(!Array.isArray(x.recurringExpenses)) x.recurringExpenses=[];
+  if(!Array.isArray(x.recurringExpenses)) x.recurringExpenses=[]; if(!Array.isArray(x.paidRecurring)) x.paidRecurring=[];
   x.recurringIncomes=x.recurringIncomes.map(r=>{let z={...r};if(z.amount===550&&z.day===1)z.title='فلوس زكرياء';if(z.amount===1700&&z.day===10)z.title='راتبي';if(z.amount===900&&z.day===20)z.title='فلوس الأطفال';return z});
   return {...structuredClone(defaultData),...x};
 }}catch(e){}return structuredClone(defaultData)}
@@ -114,7 +114,7 @@ function txTotals(){let today=todayISO();let inc=data.incomes.filter(x=>!x.date|
 function currentBalance(){let t=txTotals();return data.opening+t.inc-t.exp}
 function unpaidDebts(){return data.debts.reduce((a,d)=>a+Math.max(0,d.total-d.paid),0)}
 function monthBounds(){let now=new Date(), y=now.getFullYear(), m=now.getMonth();return {from:`${y}-${String(m+1).padStart(2,'0')}-01`,to:`${y}-${String(m+1).padStart(2,'0')}-${String(new Date(y,m+1,0).getDate()).padStart(2,'0')}`}}
-function monthCommitments(){let {from,to}=monthBounds();let debts=data.debts.filter(d=>d.due>=from&&d.due<=to&&d.total>d.paid).reduce((a,d)=>a+Math.max(0,d.total-d.paid),0);let recurring=recurringInstances(data.recurringExpenses,from,to).filter(r=>!data.expenses.some(e=>e.date===r.date&&e.amount===r.amount&&e.title===r.title)).reduce((a,r)=>a+r.amount,0);return debts+recurring}
+function monthCommitments(){let {from,to}=monthBounds();let debts=data.debts.filter(d=>d.due>=from&&d.due<=to&&d.total>d.paid).reduce((a,d)=>a+Math.max(0,d.total-d.paid),0);let recurring=recurringInstances(data.recurringExpenses,from,to).filter(r=>!data.paidRecurring.includes(r.id+'_'+r.date)).reduce((a,r)=>a+r.amount,0);return debts+recurring}
 function safeSpend(){return Math.max(0,currentBalance()-monthCommitments())}
 function recurringInstances(list,from,to){
  let out=[];let s=dateObj(from), e=dateObj(to);
@@ -123,7 +123,7 @@ function recurringInstances(list,from,to){
 function upcomingIncome(days=45){let t=todayISO(), e=new Date();e.setDate(e.getDate()+days);return recurringInstances(data.recurringIncomes,t,e.toISOString().slice(0,10)).sort((a,b)=>a.date.localeCompare(b.date))}
 function upcomingExpense(days=45){let t=todayISO(), e=new Date();e.setDate(e.getDate()+days);return recurringInstances(data.recurringExpenses,t,e.toISOString().slice(0,10)).sort((a,b)=>a.date.localeCompare(b.date))}
 function health(){
- let b=currentBalance(), debt=unpaidDebts(), safe=Math.max(0,b-debt), ratio=b>0?safe/b:0;
+ let b=currentBalance(), debt=monthCommitments(), safe=Math.max(0,b-debt), ratio=b>0?safe/b:0;
  if(safe<=0)return {c:'#e05252',pct:100,status:'انتبه للدفعات 🔴',safe};
  if(ratio<.35)return {c:'#e5a52f',pct:Math.max(8,ratio*100),status:'اقترب من الحد 🟡',safe};
  return {c:'#19a463',pct:Math.max(8,Math.min(100,ratio*100)),status:'في برّ الأمان 🟢',safe};
@@ -142,7 +142,7 @@ function home(){
  return `<div class="card balance-card">
   <div class="ring" style="--ring:${h.c};--pct:${h.pct}%"><div class="ring-in"><div class="ring-amount">${money(h.safe)}</div><div class="ring-label">المتاح للصرف بأمان</div></div></div>
   <div class="status" style="--ring:${h.c};color:${h.c}">${h.status}</div><div class="sub">بعد احتساب التزامات هذا الشهر فقط</div>
-  <div class="metrics"><div class="metric"><span>الرصيد الحالي</span><b>${money(b)}</b></div><div class="metric"><span>التزامات هذا الشهر</span><b>${money(monthCommitments())}</b></div></div>
+  <div class="metrics"><div class="metric"><span>الرصيد الحالي</span><b>${money(b)}</b></div><button class="metric" onclick="openMonthCommitments()"><span>التزامات هذا الشهر</span><b>${money(monthCommitments())}</b><small>اضغط للتفاصيل ›</small></button></div>
   <div class="sub" style="margin-top:8px">إجمالي الديون والالتزامات القادمة: <b>${money(debt)}</b></div>
  </div>
  <div class="quick"><button onclick="openAdd('expense')">− إضافة مصروف</button><button onclick="openAdd('income')">＋ إضافة دخل</button></div>
@@ -168,6 +168,14 @@ function goal(){
  return `<div class="card" style="text-align:center"><h2 style="margin:0 0 3px">${data.goal.name} 🏡</h2><div class="sub">هدفك للدفعة الأولى</div><div class="goal-ring" style="--gpct:${pct}%"><div class="goal-inner"><div><b>${Math.round(pct)}%</b><br><span>من الهدف</span></div></div></div><div class="metrics"><div class="metric"><span>المدخر</span><b>${money(data.goal.saved)}</b></div><div class="metric"><span>المتبقي</span><b>${money(remain)}</b></div></div><div class="actions" style="margin-top:13px"><button class="primary" onclick="openGoal()">تعديل الهدف</button><button class="secondary" onclick="addSaving()">إضافة ادخار</button></div></div>
  <div class="card"><div class="section-title"><h2>خطة الادخار</h2></div><p style="font-size:13px;line-height:1.7;margin:0;color:var(--muted)">يمكنك تسجيل كل مبلغ تدخره، وسيتحدث التقدم تلقائيًا. الهدف الحالي ${money(data.goal.target)}.</p></div>`;
 }
+function openMonthCommitments(){
+ let {from,to}=monthBounds(), month=new Date().toLocaleDateString('ar-TN',{month:'long',year:'numeric'});
+ let debts=data.debts.filter(d=>d.due>=from&&d.due<=to&&d.total>d.paid);
+ let rec=recurringInstances(data.recurringExpenses,from,to).filter(r=>!data.paidRecurring.includes(r.id+'_'+r.date));
+ let total=debts.reduce((a,d)=>a+Math.max(0,d.total-d.paid),0)+rec.reduce((a,r)=>a+r.amount,0);
+ let rows=[...debts.map(d=>({title:d.title,amount:Math.max(0,d.total-d.paid),date:d.due,icon:'💳',sub:'استحقاق '+fmtDate(d.due),action:`<button class=\"smallbtn\" onclick=\"payDebt('\${d.id}\')\">تسجيل دفعة</button>`})),...rec.map(r=>({title:r.title,amount:r.amount,date:r.date,icon:cats[r.cat]?.[0]||'🔁',sub:'استحقاق '+fmtDate(r.date),action:`<button class=\"smallbtn\" onclick=\"payRecurring('\${r.id}\')\">دفع</button>`}))].sort((a,b)=>a.date.localeCompare(b.date));
+ openModal(`<button class=\"closex\" onclick=\"closeModal()\">×</button><h2>التزامات ${month}</h2><div class=\"sub\" style=\"margin-bottom:10px\">هذه القائمة تعرض التزامات هذا الشهر فقط.</div>${rows.map(x=>`<div class=\"row\"><div class=\"ico\">${x.icon}</div><div class=\"row-main\"><b>${x.title}</b><span>${x.sub}</span></div><div style=\"text-align:left\"><div class=\"amount\">${money(x.amount)}</div>${x.action}</div></div>`).join('')||'<div class=\"empty\">لا توجد التزامات متبقية هذا الشهر 🎉</div>'}<div class=\"metrics\" style=\"margin-top:12px\"><div class=\"metric\"><span>مجموع هذا الشهر</span><b>${money(total)}</b></div></div><div class=\"actions\"><button class=\"secondary\" onclick=\"closeModal()\">إغلاق</button></div>`);
+}
 function openModal(inner){document.getElementById('sheet').innerHTML=inner;document.getElementById('modal').classList.add('show')}
 function closeModal(){document.getElementById('modal').classList.remove('show')}
 function openAdd(type='expense',cat='food'){
@@ -183,7 +191,7 @@ function openRecurring(kind){
  let isIn=kind!=='expense';
  let list=isIn?data.recurringIncomes:data.recurringExpenses;
  openModal(`<button class="closex" onclick="closeModal()">×</button><h2>${isIn?'الدخل المتكرر':'المصاريف المتكررة'}</h2>
- ${list.map((r,i)=>`<div class="row"><div class="ico">${isIn?'💰':(cats[r.cat]?.[0]||'🔁')}</div><div class="row-main"><b>${r.title}</b><span>${money(r.amount)} · يوم ${r.day} من كل شهر</span></div><button class="smallbtn" onclick="removeRecurring('${isIn?'in':'ex'}','${r.id}')">حذف</button></div>`).join('')||'<div class="empty">لا يوجد شيء متكرر.</div>'}
+ ${list.map((r,i)=>{let today=todayISO(), day=Math.min(r.day,new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()), key=r.id+'_'+todayISO().slice(0,8)+String(day).padStart(2,'0'), already=data.paidRecurring.includes(key); return `<div class="row"><div class="ico">${isIn?'💰':(cats[r.cat]?.[0]||'🔁')}</div><div class="row-main"><b>${r.title}</b><span>${money(r.amount)} · يوم ${r.day} من كل شهر</span></div>${!isIn?`<button class="smallbtn" onclick="payRecurring('${r.id}')">${already?'تم الدفع ✓':'دفع'}</button>`:''}<button class="smallbtn" onclick="removeRecurring('${isIn?'in':'ex'}','${r.id}')">حذف</button></div>`}).join('')||'<div class="empty">لا يوجد شيء متكرر.</div>'}
  <div class="actions"><button class="primary" onclick="addRecurringForm('${isIn?'income':'expense'}')">＋ إضافة متكرر</button><button class="secondary" onclick="closeModal()">إغلاق</button></div>`);
 }
 function addRecurringForm(kind){
@@ -197,10 +205,11 @@ function addRecurringForm(kind){
  <div class="actions"><button class="primary" onclick="saveRecurring('${kind}')">حفظ</button><button class="secondary" onclick="openRecurring('${kind}')">رجوع</button></div>`);
 }
 function saveRecurring(kind){let a=+rAmount.value;if(!a)return toast('أدخل المبلغ');let r={id:'r'+Date.now(),title:rTitle.value||'متكرر',amount:a,day:Math.max(1,Math.min(31,+rDay.value||1)),start:rStart.value};if(kind==='expense')r.cat=rCat.value;(kind==='income'?data.recurringIncomes:data.recurringExpenses).push(r);save();closeModal();render();toast('تمت إضافة التكرار ✓')}
+function payRecurring(id){let r=data.recurringExpenses.find(x=>x.id===id);if(!r)return;let d=new Date(), day=Math.min(r.day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()), date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(day).padStart(2,'0'), key=id+'_'+date;if(data.paidRecurring.includes(key))return toast('تم دفع هذا الشهر ✓');data.expenses.push({id:'x'+Date.now(),title:r.title,amount:r.amount,date,cat:r.cat,recurringId:id});data.paidRecurring.push(key);save();render();toast('تم تسجيل الدفع ✓')}
 function removeRecurring(type,id){let arr=type==='in'?data.recurringIncomes:data.recurringExpenses;let i=arr.findIndex(x=>x.id===id);if(i>=0)arr.splice(i,1);save();openRecurring(type==='in'?'income':'expense')}
 function openDebt(){openModal(`<button class="closex" onclick="closeModal()">×</button><h2>إضافة دين</h2><label>اسم الدين</label><input id="dTitle" class="field" placeholder="مثال: كهرباء"><label>المبلغ (€)</label><input id="dAmount" class="field" type="number" step="0.01"><label>تاريخ الاستحقاق</label><input id="dDue" class="field" type="date"><div class="actions"><button class="primary" onclick="saveDebt()">حفظ</button><button class="secondary" onclick="closeModal()">إلغاء</button></div>`)}
 function saveDebt(){let a=+dAmount.value;if(!a)return toast('أدخل المبلغ');data.debts.push({id:'d'+Date.now(),title:dTitle.value||'دين',total:a,paid:0,due:dDue.value});save();closeModal();render();toast('تمت إضافة الدين ✓')}
-function payDebt(id){let d=data.debts.find(x=>x.id===id), rem=d.total-d.paid;let a=+prompt('كم دفعت؟',String(rem));if(a>0){d.paid=Math.min(d.total,d.paid+a);save();render();toast('تم تسجيل الدفعة ✓')}}
+function payDebt(id){let d=data.debts.find(x=>x.id===id), rem=d.total-d.paid;let a=+prompt('كم دفعت؟',String(rem));if(a>0){a=Math.min(a,rem);d.paid+=a;data.expenses.push({id:'x'+Date.now(),title:d.title,amount:a,date:todayISO(),cat:'debt'});save();render();toast('تم تسجيل الدفعة ✓')}}
 function removeDebt(id){if(confirm('حذف هذا الدين؟')){data.debts=data.debts.filter(x=>x.id!==id);save();render()}}
 function openGoal(){openModal(`<button class="closex" onclick="closeModal()">×</button><h2>هدف المنزل</h2><label>اسم الهدف</label><input id="gName" class="field" value="${data.goal.name}"><label>المبلغ المستهدف (€)</label><input id="gTarget" class="field" type="number" value="${data.goal.target}"><label>المدخر حاليًا (€)</label><input id="gSaved" class="field" type="number" value="${data.goal.saved}"><div class="actions"><button class="primary" onclick="saveGoal()">حفظ</button><button class="secondary" onclick="closeModal()">إلغاء</button></div>`)}
 function saveGoal(){data.goal={name:gName.value||'شراء منزل',target:+gTarget.value||30000,saved:+gSaved.value||0};save();closeModal();render();toast('تم تحديث الهدف ✓')}
