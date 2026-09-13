@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>فلوسي</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Arial,sans-serif;background:#f5f7f8;color:#17202a}
+header{background:#0f766e;color:white;padding:28px 18px 22px;border-radius:0 0 26px 26px}
+h1{margin:0 0 4px;font-size:28px}header p{margin:0;opacity:.85}
+main{padding:16px 14px 90px;max-width:700px;margin:auto}
+.card{background:white;border-radius:20px;padding:17px;margin:10px 0;box-shadow:0 2px 12px #0000000d}
+.balance{font-size:34px;font-weight:800;margin-top:5px}.muted{color:#718096;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{font-weight:800;font-size:19px;margin-top:6px}
+.progress{height:10px;background:#e7ecee;border-radius:20px;overflow:hidden}.bar{height:100%;background:#0f766e;border-radius:20px}
+button,input,select{font:inherit}button{border:0;border-radius:13px;padding:11px 14px;background:#0f766e;color:white;font-weight:700}
+button.secondary{background:#edf2f2;color:#17665f}.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.list{margin-top:10px}.item{padding:12px 0;border-top:1px solid #edf0f1}.income{color:#14804a}.expense{color:#c0392b}.debt{color:#8a4b08}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7e9;display:flex;justify-content:space-around;padding:9px 4px calc(9px + env(safe-area-inset-bottom));z-index:4}
+nav button{background:transparent;color:#68747d;padding:7px 10px;font-size:12px}nav button.active{color:#0f766e}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;z-index:10}.modal.show{display:flex}
+.sheet{background:white;width:100%;border-radius:24px 24px 0 0;padding:20px;max-height:85vh;overflow:auto}
+label{display:block;margin:10px 0 5px;font-size:13px;color:#667}.field{width:100%;padding:12px;border:1px solid #dce2e4;border-radius:12px;background:white}
+.actions{display:flex;gap:8px;margin-top:15px}.actions>*{flex:1}
+</style>
+</head>
+<body>
+<header><h1>فلوسي</h1><p>إدارة أموالك ببساطة — بدون اشتراك</p></header>
+<main id="app"></main>
+<nav>
+<button data-page="home" class="active">🏠<br>الرئيسية</button>
+<button data-page="transactions">↔️<br>المعاملات</button>
+<button data-page="debts">💳<br>الديون</button>
+<button data-page="goal">🎯<br>الهدف</button>
+</nav>
+
+<div id="modal" class="modal"><div class="sheet" id="sheet"></div></div>
+
+<script>
+const KEY="floosi_v1";
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||{
+ balance:550,
+ incomes:[
+  {title:"دخل 20 سبتمبر",amount:900,date:"2026-09-20"},
+  {title:"راتب 22–30 سبتمبر",amount:600,date:"2026-10-10"},
+  {title:"دخل 1 أكتوبر",amount:550,date:"2026-10-01"},
+  {title:"دخل 20 أكتوبر",amount:900,date:"2026-10-20"},
+  {title:"راتب أكتوبر",amount:1700,date:"2026-11-10"},
+  {title:"دخل 1 نوفمبر",amount:550,date:"2026-11-01"},
+  {title:"دخل 20 نوفمبر",amount:900,date:"2026-11-20"}
+ ],
+ expenses:[],
+ debts:[
+  {title:"كهرباء سبتمبر",total:245,paid:0,due:"2026-09-30"},
+  {title:"مدرسة سبتمبر",total:180,paid:0,due:"2026-09-30"},
+  {title:"Scalapay — المستخدم سبتمبر",total:200,paid:0,due:"2026-09-30"},
+  {title:"Scalapay — الزوجة سبتمبر",total:267,paid:0,due:"2026-09-30"},
+  {title:"كراء سبتمبر",total:250,paid:0,due:"2026-10-10"},
+  {title:"Scalapay — المستخدم أكتوبر",total:200,paid:0,due:"2026-10-31"},
+  {title:"Scalapay — الزوجة أكتوبر",total:220,paid:0,due:"2026-10-31"},
+  {title:"مدرسة متأخرة",total:280,paid:0,due:"2026-11-10"},
+  {title:"دراسة الابن",total:280,paid:0,due:"2026-11-10"},
+  {title:"Scalapay — المستخدم نوفمبر",total:104,paid:0,due:"2026-11-30"},
+  {title:"كهرباء مؤجلة",total:205,paid:0,due:"2026-11-30"},
+  {title:"الصديق",total:300,paid:0,due:"2026-12-01"}
+ ],
+ goal:{name:"شراء منزل",target:30000,saved:0}
+};
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function eur(n){return new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+" €"}
+function expensesTotal(){return data.expenses.reduce((s,x)=>s+x.amount,0)}
+function debtsTotal(){return data.debts.reduce((s,x)=>s+Math.max(0,x.total-x.paid),0)}
+function render(page="home"){
+ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+ if(page==="home") home(); if(page==="transactions") transactions(); if(page==="debts") debts(); if(page==="goal") goal();
+}
+function home(){
+ const bal=data.balance-expensesTotal();
+ const debt=debtsTotal(), gp=Math.min(100,data.goal.saved/data.goal.target*100);
+ document.getElementById("app").innerHTML=`
+ <div class="card"><div class="muted">الرصيد المتاح الآن</div><div class="balance">${eur(bal)}</div><div class="muted">الرصيد الافتتاحي: ${eur(data.balance)}</div></div>
+ <div class="grid">
+  <div class="card"><div class="muted">الدخل المخطط</div><div class="metric">${eur(data.incomes.reduce((s,x)=>s+x.amount,0))}</div></div>
+  <div class="card"><div class="muted">المصاريف المسجلة</div><div class="metric">${eur(expensesTotal())}</div></div>
+ </div>
+ <div class="card"><div class="row"><b>الديون المتبقية</b><b class="debt">${eur(debt)}</b></div><div class="muted">كلها في مكان واحد، بدون Pro</div></div>
+ <div class="card"><div class="row"><b>🏠 ${data.goal.name}</b><b>${Math.round(gp)}%</b></div><p class="muted">${eur(data.goal.saved)} من ${eur(data.goal.target)}</p><div class="progress"><div class="bar" style="width:${gp}%"></div></div></div>
+ <div class="card"><button onclick="openTx()">＋ إضافة دخل أو مصروف</button></div>`;
+}
+function transactions(){
+ let all=[...data.incomes.map(x=>({...x,type:"income"})),...data.expenses.map(x=>({...x,type:"expense"}))].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ document.getElementById("app").innerHTML=`<div class="row"><h2>المعاملات</h2><button onclick="openTx()">＋ إضافة</button></div>
+ <div class="card">${all.length?all.map(x=>`<div class="item row"><div><b>${x.title}</b><div class="muted">${x.date||""}</div></div><b class="${x.type}">${x.type==="income"?"+":"-"}${eur(x.amount)}</b></div>`).join(""):"لا توجد معاملات"}</div>`;
+}
+function debts(){
+ document.getElementById("app").innerHTML=`<div class="row"><h2>الديون والأقساط</h2><button onclick="openDebt()">＋ إضافة</button></div>
+ <div class="card">${data.debts.map((d,i)=>{let r=Math.max(0,d.total-d.paid),p=d.total?d.paid/d.total*100:100;return `<div class="item"><div class="row"><b>${d.title}</b><b class="debt">${eur(r)}</b></div><div class="muted">الاستحقاق: ${d.due||"بدون تاريخ"} · المدفوع ${eur(d.paid)} من ${eur(d.total)}</div><div class="progress" style="margin:8px 0"><div class="bar" style="width:${p}%"></div></div><button class="secondary" onclick="pay(${i})">تسجيل دفعة</button></div>`}).join("")}</div>`;
+}
+function goal(){
+ let p=Math.min(100,data.goal.saved/data.goal.target*100);
+ document.getElementById("app").innerHTML=`<h2>🎯 هدف المنزل</h2><div class="card"><h3>${data.goal.name}</h3><div class="metric">${eur(data.goal.saved)} / ${eur(data.goal.target)}</div><div class="progress" style="margin:12px 0"><div class="bar" style="width:${p}%"></div></div><p>المتبقي: <b>${eur(Math.max(0,data.goal.target-data.goal.saved))}</b></p><button onclick="openGoal()">تعديل الهدف</button></div>`;
+}
+function openTx(){
+ sheet.innerHTML=`<h2>إضافة معاملة</h2><label>النوع</label><select id="tType" class="field"><option value="expense">مصروف</option><option value="income">دخل</option></select><label>الوصف</label><input id="tTitle" class="field" placeholder="مثال: أكل أو راتب"><label>المبلغ (€)</label><input id="tAmount" class="field" type="number" step="0.01"><label>التاريخ</label><input id="tDate" class="field" type="date"><div class="actions"><button onclick="addTx()">حفظ</button><button class="secondary" onclick="closeModal()">إلغاء</button></div>`;modal.classList.add("show");tDate.value=new Date().toISOString().slice(0,10)
+}
+function addTx(){let a=+tAmount.value;if(!a)return;let x={title:tTitle.value||"معاملة",amount:a,date:tDate.value};(tType.value==="income"?data.incomes:data.expenses).push(x);save();closeModal();render("transactions")}
+function openDebt(){sheet.innerHTML=`<h2>إضافة دين</h2><label>اسم الدين</label><input id="dTitle" class="field" placeholder="مثال: كهرباء"><label>المبلغ (€)</label><input id="dAmount" class="field" type="number" step="0.01"><label>تاريخ الاستحقاق</label><input id="dDue" class="field" type="date"><div class="actions"><button onclick="addDebt()">حفظ</button><button class="secondary" onclick="closeModal()">إلغاء</button></div>`;modal.classList.add("show")}
+function addDebt(){let a=+dAmount.value;if(!a)return;data.debts.push({title:dTitle.value||"دين",total:a,paid:0,due:dDue.value});save();closeModal();render("debts")}
+function pay(i){let remaining=data.debts[i].total-data.debts[i].paid;let a=prompt("كم دفعت؟",String(remaining));a=+a;if(a>0){data.debts[i].paid=Math.min(data.debts[i].total,data.debts[i].paid+a);save();render("debts")}}
+function openGoal(){sheet.innerHTML=`<h2>تعديل هدف المنزل</h2><label>اسم الهدف</label><input id="gName" class="field" value="${data.goal.name}"><label>المبلغ المستهدف (€)</label><input id="gTarget" class="field" type="number" value="${data.goal.target}"><label>المدخر حاليًا (€)</label><input id="gSaved" class="field" type="number" value="${data.goal.saved}"><div class="actions"><button onclick="saveGoal()">حفظ</button><button class="secondary" onclick="closeModal()">إلغاء</button></div>`;modal.classList.add("show")}
+function saveGoal(){data.goal={name:gName.value||"شراء منزل",target:+gTarget.value||30000,saved:+gSaved.value||0};save();closeModal();render("goal")}
+function closeModal(){modal.classList.remove("show")}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>render(b.dataset.page));
+render();
+</script>
+</body></html>
