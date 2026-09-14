@@ -13,17 +13,17 @@
 :root{--bg:#f3f7f5;--card:#fff;--ink:#15221b;--muted:#78867e;--green:#19a463;--green2:#0f8b5b;--yellow:#e5a52f;--red:#e05252;--line:#e5ebe7;--soft:#f7faf8;--shadow:0 10px 28px rgba(25,60,42,.08)}
 body.dark{--bg:#101512;--card:#18201c;--ink:#eef6f1;--muted:#9aa9a1;--line:#29352f;--soft:#202a25;--shadow:0 10px 28px rgba(0,0,0,.28)}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Arial,sans-serif}
-body.dark .ring:before{background:var(--card)}body.dark .metric,body.dark .cat{background:var(--soft)}body.dark .field{background:#202a25;color:var(--ink)}body.dark .bottom{background:rgba(24,32,28,.94)}body.dark .sheet{background:var(--card)}body.dark .closex{background:var(--soft)}
+body.dark{--ring-bg:#2a3730}body.dark .ring:before{background:var(--card)}body.dark .metric,body.dark .cat{background:var(--soft)}body.dark .field{background:#202a25;color:var(--ink)}body.dark .bottom{background:rgba(24,32,28,.94)}body.dark .sheet{background:var(--card)}body.dark .closex{background:var(--soft)}
 body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
 button,input,select{font:inherit}button{border:0;cursor:pointer}
 .app{max-width:720px;margin:auto}
-.top{padding:22px 18px 14px;background:linear-gradient(150deg,#0f8b5b,#19a463);color:#fff;border-radius:0 0 30px 30px}
-.brand{display:flex;align-items:center;justify-content:space-between}.themebtn{background:rgba(255,255,255,.18);color:#fff;width:42px;height:42px;border-radius:14px;font-size:20px}.brand h1{margin:0;font-size:28px;letter-spacing:-.5px}.brand small{opacity:.8}
+.top{padding:calc(18px + env(safe-area-inset-top)) 18px 18px;background:linear-gradient(145deg,#087b51,#19a463 55%,#2fbd78);color:#fff;border-radius:0 0 34px 34px;box-shadow:0 10px 30px rgba(15,139,91,.20);position:relative;overflow:hidden}.top:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);left:-55px;top:-80px}.top>*{position:relative;z-index:1}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand-left{display:flex;align-items:center;gap:11px}.logo-mark{width:46px;height:46px;border-radius:15px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:25px;box-shadow:inset 0 1px rgba(255,255,255,.18)}.themebtn{background:rgba(255,255,255,.18);color:#fff;width:46px;height:46px;border-radius:15px;font-size:21px;box-shadow:inset 0 1px rgba(255,255,255,.18)}.brand h1{margin:0;font-size:29px;letter-spacing:-.7px}.brand small{display:block;opacity:.82;font-size:10px;margin-top:2px}.date{text-align:center;margin-top:15px;font-size:15px;font-weight:800}.month{text-align:center;margin-top:5px;opacity:.82;font-size:11px}
 .date{text-align:center;margin-top:12px;font-weight:700}.month{text-align:center;margin-top:4px;opacity:.78;font-size:12px}
 main{padding:14px 14px 22px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:17px;margin:12px 0}
 .balance-card{text-align:center;padding:20px 14px 18px}
-.ring{width:220px;height:220px;margin:4px auto 12px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--ring) var(--pct),#e7eeea 0);position:relative;box-shadow:0 12px 35px rgba(25,70,48,.10)}
+.ring{width:220px;height:220px;margin:4px auto 12px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--ring) var(--pct),var(--ring-bg,#e7eeea) 0);position:relative;box-shadow:0 12px 35px rgba(25,70,48,.10)}
 .ring:before{content:"";position:absolute;inset:12px;border-radius:50%;background:#fff}
 .ring-in{position:relative}.ring-amount{font-size:34px;font-weight:900;letter-spacing:-1px}.ring-label{font-size:12px;color:var(--muted);margin-top:3px}
 .status{font-weight:900;color:var(--ring);font-size:15px}.sub{font-size:12px;color:var(--muted);margin-top:5px}
@@ -137,7 +137,7 @@ function health(){
 }
 function header(){
  let now=new Date(), day=now.toLocaleDateString('ar-TN',{weekday:'long'}), full=now.toLocaleDateString('ar-TN',{day:'numeric',month:'long',year:'numeric'}), month=now.toLocaleDateString('ar-TN',{month:'long',year:'numeric'});
- return `<div class="top"><div class="brand"><h1>Floosi</h1><small>إدارة أموالك بوضوح</small></div><div class="date">${day}، ${full}</div><div class="month">${month} · اليوم ${now.getDate()} من الشهر</div></div>`;
+ return `<div class="top"><div class="brand"><div class="brand-left"><div class="logo-mark">💰</div><div><h1>Floosi</h1><small>إدارة أموالك بوضوح</small></div></div><button class="themebtn" id="themeBtn" onclick="toggleTheme()" aria-label="تبديل الوضع">🌙</button></div><div class="date">${day}، ${full}</div><div class="month">${month} · اليوم ${now.getDate()} من الشهر</div></div>`;
 }
 function render(){
  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
