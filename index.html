@@ -77,7 +77,7 @@ const defaultData={
  recurringIncomes:[
   {id:'ri1',title:'فلوس زكرياء',amount:550,day:1,start:'2026-10-01'},
   {id:'ri2',title:'راتبي',amount:1700,day:10,start:'2026-11-10'},
-  {id:'ri3',title:'فلوس الأطفال',amount:900,day:19,start:'2026-09-19'}
+  {id:'ri3',title:'فلوس الأطفال',amount:900,day:20,start:'2026-09-20'}
  ],
  recurringExpenses:[
   {id:'re1',title:'كراء',amount:250,day:10,start:'2026-10-10',cat:'rent'},
@@ -101,14 +101,15 @@ function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x){
   if(!Array.isArray(x.debts)) x.debts=[]; if(!x.goal) x.goal=structuredClone(defaultData.goal);
   if(!Array.isArray(x.recurringIncomes)) x.recurringIncomes=[];
   if(!Array.isArray(x.recurringExpenses)) x.recurringExpenses=[]; if(!Array.isArray(x.paidRecurring)) x.paidRecurring=[];
-  x.recurringIncomes=x.recurringIncomes.map(r=>{let z={...r};if(z.amount===550&&z.day===1){z.title='فلوس زكرياء';z.start='2026-10-01';}if(z.amount===1700&&z.day===10){z.title='راتبي';z.start='2026-11-10';}if(z.amount===900){z.title='فلوس الأطفال';z.day=19;z.start='2026-09-19';}return z});
+  x.recurringIncomes=x.recurringIncomes.map(r=>{let z={...r};if(z.amount===550&&z.day===1){z.title='فلوس زكرياء';z.start='2026-10-01';}if(z.amount===1700&&z.day===10){z.title='راتبي';z.start='2026-11-10';}if(z.amount===900){z.title='فلوس الأطفال';z.day=20;z.start='2026-09-20';}return z});
   return {...structuredClone(defaultData),...x};
 }}catch(e){}return structuredClone(defaultData)}
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
 function money(n){return new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n||0)}
 function dateObj(s){return new Date(s+'T12:00:00')}
 function fmtDate(s){if(!s)return 'بدون تاريخ';return dateObj(s).toLocaleDateString('ar-TN',{day:'numeric',month:'short',year:'numeric'})}
-function todayISO(){let d=new Date();return d.toISOString().slice(0,10)}
+function localISO(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function todayISO(){return localISO()}
 function daysLeft(s){return Math.ceil((dateObj(s)-new Date())/86400000)}
 function txTotals(){let today=todayISO();let inc=data.incomes.filter(x=>!x.date||x.date<=today).reduce((a,x)=>a+x.amount,0), exp=data.expenses.filter(x=>!x.date||x.date<=today).reduce((a,x)=>a+x.amount,0);return {inc,exp}}
 function currentBalance(){let t=txTotals();return data.opening+t.inc-t.exp}
@@ -118,10 +119,10 @@ function monthCommitments(){let {from,to}=monthBounds();let debts=data.debts.fil
 function safeSpend(){return Math.max(0,currentBalance()-monthCommitments())}
 function recurringInstances(list,from,to){
  let out=[];let s=dateObj(from), e=dateObj(to);
- list.forEach(r=>{let cur=new Date(s.getFullYear(),s.getMonth(),1);while(cur<=e){let y=cur.getFullYear(),m=cur.getMonth(),day=Math.min(r.day,new Date(y,m+1,0).getDate());let dt=new Date(y,m,day);let ds=dt.toISOString().slice(0,10);if(dt>=s&&dt<=e&&ds>=r.start)out.push({...r,date:ds});cur=new Date(y,m+1,1)}});return out
+ list.forEach(r=>{let cur=new Date(s.getFullYear(),s.getMonth(),1);while(cur<=e){let y=cur.getFullYear(),m=cur.getMonth(),day=Math.min(r.day,new Date(y,m+1,0).getDate());let dt=new Date(y,m,day);let ds=localISO(dt);if(dt>=s&&dt<=e&&ds>=r.start)out.push({...r,date:ds});cur=new Date(y,m+1,1)}});return out
 }
-function upcomingIncome(days=45){let t=todayISO(), e=new Date();e.setDate(e.getDate()+days);return recurringInstances(data.recurringIncomes,t,e.toISOString().slice(0,10)).sort((a,b)=>a.date.localeCompare(b.date))}
-function upcomingExpense(days=45){let t=todayISO(), e=new Date();e.setDate(e.getDate()+days);return recurringInstances(data.recurringExpenses,t,e.toISOString().slice(0,10)).sort((a,b)=>a.date.localeCompare(b.date))}
+function upcomingIncome(days=45){let t=todayISO(), e=new Date();e.setDate(e.getDate()+days);return recurringInstances(data.recurringIncomes,t,localISO(e)).sort((a,b)=>a.date.localeCompare(b.date))}
+function upcomingExpense(days=45){let t=todayISO(), e=new Date();e.setDate(e.getDate()+days);return recurringInstances(data.recurringExpenses,t,localISO(e)).sort((a,b)=>a.date.localeCompare(b.date))}
 function health(){
  let b=currentBalance(), debt=monthCommitments(), safe=Math.max(0,b-debt), ratio=b>0?safe/b:0;
  if(safe<=0)return {c:'#e05252',pct:100,status:'انتبه للدفعات 🔴',safe};
