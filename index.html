@@ -101,7 +101,7 @@ function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x){
   if(!Array.isArray(x.debts)) x.debts=[]; if(!x.goal) x.goal=structuredClone(defaultData.goal);
   if(!Array.isArray(x.recurringIncomes)) x.recurringIncomes=[];
   if(!Array.isArray(x.recurringExpenses)) x.recurringExpenses=[]; if(!Array.isArray(x.paidRecurring)) x.paidRecurring=[];
-  x.recurringIncomes=x.recurringIncomes.map(r=>{let z={...r};if(z.amount===550&&z.day===1)z.title='فلوس زكرياء';if(z.amount===1700&&z.day===10)z.title='راتبي';if(z.amount===900&&z.day===19)z.title='فلوس الأطفال';return z});
+  x.recurringIncomes=x.recurringIncomes.map(r=>{let z={...r};if(z.amount===550&&z.day===1){z.title='فلوس زكرياء';z.start='2026-10-01';}if(z.amount===1700&&z.day===10){z.title='راتبي';z.start='2026-11-10';}if(z.amount===900){z.title='فلوس الأطفال';z.day=19;z.start='2026-09-19';}return z});
   return {...structuredClone(defaultData),...x};
 }}catch(e){}return structuredClone(defaultData)}
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
