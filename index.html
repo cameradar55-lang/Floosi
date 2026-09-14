@@ -10,13 +10,15 @@
 <link rel="manifest" href="manifest.json">
 <title>Floosi — فلوسي</title>
 <style>
-:root{--bg:#f3f7f5;--card:#fff;--ink:#15221b;--muted:#78867e;--green:#19a463;--green2:#0f8b5b;--yellow:#e5a52f;--red:#e05252;--line:#e5ebe7;--shadow:0 10px 28px rgba(25,60,42,.08)}
+:root{--bg:#f3f7f5;--card:#fff;--ink:#15221b;--muted:#78867e;--green:#19a463;--green2:#0f8b5b;--yellow:#e5a52f;--red:#e05252;--line:#e5ebe7;--soft:#f7faf8;--shadow:0 10px 28px rgba(25,60,42,.08)}
+body.dark{--bg:#101512;--card:#18201c;--ink:#eef6f1;--muted:#9aa9a1;--line:#29352f;--soft:#202a25;--shadow:0 10px 28px rgba(0,0,0,.28)}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Arial,sans-serif}
+body.dark .ring:before{background:var(--card)}body.dark .metric,body.dark .cat{background:var(--soft)}body.dark .field{background:#202a25;color:var(--ink)}body.dark .bottom{background:rgba(24,32,28,.94)}body.dark .sheet{background:var(--card)}body.dark .closex{background:var(--soft)}
 body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
 button,input,select{font:inherit}button{border:0;cursor:pointer}
 .app{max-width:720px;margin:auto}
 .top{padding:22px 18px 14px;background:linear-gradient(150deg,#0f8b5b,#19a463);color:#fff;border-radius:0 0 30px 30px}
-.brand{display:flex;align-items:center;justify-content:space-between}.brand h1{margin:0;font-size:28px;letter-spacing:-.5px}.brand small{opacity:.8}
+.brand{display:flex;align-items:center;justify-content:space-between}.themebtn{background:rgba(255,255,255,.18);color:#fff;width:42px;height:42px;border-radius:14px;font-size:20px}.brand h1{margin:0;font-size:28px;letter-spacing:-.5px}.brand small{opacity:.8}
 .date{text-align:center;margin-top:12px;font-weight:700}.month{text-align:center;margin-top:4px;opacity:.78;font-size:12px}
 main{padding:14px 14px 22px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:17px;margin:12px 0}
@@ -36,7 +38,7 @@ main{padding:14px 14px 22px}
 .progress{height:12px;background:#e8eeea;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:linear-gradient(90deg,#18a463,#48c47f);border-radius:99px;width:0}
 .modal{position:fixed;inset:0;background:rgba(13,24,18,.38);display:none;align-items:flex-end;z-index:50}.modal.show{display:flex}.sheet{background:#fff;width:100%;max-width:720px;margin:auto;border-radius:28px 28px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}.sheet h2{margin:0 0 15px;font-size:21px}.field{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:15px;background:#fafcfb;margin:5px 0 11px;outline:none}.field:focus{border-color:#7bc7a4}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:5px}.primary,.secondary{padding:13px;border-radius:15px;font-weight:900}.primary{background:var(--green2);color:#fff}.secondary{background:#edf1ef;color:#39463f}.closex{float:left;background:#f1f4f2;width:34px;height:34px;border-radius:50%;font-size:20px}
 .pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#eef7f1;color:#0c7950;font-size:10px;font-weight:800}.danger{background:#fff0ee;color:#c94d3e}.warning{background:#fff7df;color:#a87312}
-.debt-card{padding:13px 0;border-bottom:1px solid var(--line)}.debt-head{display:flex;justify-content:space-between;gap:8px}.debt-title{font-weight:900}.debt-meta{font-size:11px;color:var(--muted);margin-top:4px}.debt-actions{display:flex;gap:7px;margin-top:8px}.smallbtn{padding:8px 11px;border-radius:11px;background:#edf8f2;color:#08734a;font-size:11px;font-weight:800}
+.debt-card{padding:13px 0;border-bottom:1px solid var(--line)}.debt-head{display:flex;justify-content:space-between;gap:8px}.debt-title{font-weight:900}.debt-meta{font-size:11px;color:var(--muted);margin-top:4px}.debt-actions{display:flex;gap:7px;margin-top:8px}.delbtn{display:block;margin-top:5px;background:none;color:#c94d3e;font-size:14px;padding:2px 0}.smallbtn{padding:8px 11px;border-radius:11px;background:#edf8f2;color:#08734a;font-size:11px;font-weight:800}
 .goal-ring{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;margin:5px auto 15px;background:conic-gradient(#19a463 var(--gpct),#e8eeea 0)}.goal-ring:before{content:"";position:absolute}.goal-inner{width:120px;height:120px;border-radius:50%;background:white;display:grid;place-items:center;text-align:center}.goal-inner b{font-size:25px}.goal-inner span{font-size:10px;color:var(--muted)}
 .toast{position:fixed;z-index:80;top:18px;left:50%;transform:translateX(-50%);background:#15221b;color:#fff;padding:11px 15px;border-radius:14px;font-size:12px;display:none;box-shadow:0 8px 25px #0003}.toast.show{display:block}
 @media(max-width:390px){.ring{width:195px;height:195px}.grid4{grid-template-columns:repeat(4,1fr)}.metric b{font-size:16px}}
@@ -56,7 +58,7 @@ main{padding:14px 14px 22px}
 <script>
 const KEY='floosi_v1';
 const cats={food:['🍽️','أكل'],fuel:['⛽','وقود'],rent:['🏠','كراء'],electric:['💡','كهرباء'],phone:['📱','هاتف'],internet:['🌐','إنترنت'],car:['🚗','سيارة'],kids:['👨‍👩‍👧‍👦','أطفال'],fun:['🎉','خروجات'],shopping:['🛒','مشتريات'],personal:['☕','مصروفي الخاص'],smoking:['🚬','تدخين'],cafe:['☕','مقهى'],debt:['💳','أقساط وديون'],other:['📦','أخرى']};
-const defaultBudgets={food:400,fuel:100,fun:200,kids:200,shopping:200,personal:0,smoking:0,cafe:0};
+const defaultBudgets={food:400,fuel:100,fun:200,kids:200,shopping:200,personal:250,smoking:0,cafe:0};
 const defaultData={
  opening:550,
  incomes:[],
@@ -162,7 +164,7 @@ function home(){
 }
 function transactions(){
  let all=[...data.incomes.map(x=>({...x,type:'income'})),...data.expenses.map(x=>({...x,type:'expense'}))].sort((a,b)=>b.date.localeCompare(a.date));
- return `<div class="card"><div class="section-title"><h2>المعاملات</h2><button class="link" onclick="openAdd()">＋ إضافة</button></div>${all.map((x,i)=>`<div class="row"><div class="ico">${x.type==='income'?'💰':(cats[x.cat]?.[0]||'📦')}</div><div class="row-main"><b>${x.title}</b><span>${fmtDate(x.date)}</span></div><div class="amount ${x.type}">${x.type==='income'?'+':'−'}${money(x.amount)}</div></div>`).join('')||'<div class="empty">لم تسجل أي معاملات بعد.</div>'}</div>
+ return `<div class="card"><div class="section-title"><h2>المعاملات</h2><button class="link" onclick="openAdd()">＋ إضافة</button></div>${all.map((x,i)=>`<div class="row"><div class="ico">${x.type==='income'?'💰':(cats[x.cat]?.[0]||'📦')}</div><div class="row-main"><b>${x.title}</b><span>${fmtDate(x.date)}</span></div><div style="text-align:left"><div class="amount ${x.type}">${x.type==='income'?'+':'−'}${money(x.amount)}</div><button class="delbtn" onclick="deleteTransaction('${x.id}','${x.type}')">🗑️</button></div></div>`).join('')||'<div class="empty">لم تسجل أي معاملات بعد.</div>'}</div>
  <div class="card"><div class="section-title"><h2>المتكرر</h2><button class="link" onclick="openRecurring()">إدارة</button></div><div class="quick"><button onclick="openRecurring('income')">💰 دخل متكرر</button><button onclick="openRecurring('expense')">🔁 مصروف متكرر</button></div></div>`;
 }
 function debts(){
@@ -224,8 +226,13 @@ function removeDebt(id){if(confirm('حذف هذا الدين؟')){data.debts=dat
 function openGoal(){openModal(`<button class="closex" onclick="closeModal()">×</button><h2>هدف المنزل</h2><label>اسم الهدف</label><input id="gName" class="field" value="${data.goal.name}"><label>المبلغ المستهدف (€)</label><input id="gTarget" class="field" type="number" value="${data.goal.target}"><label>المدخر حاليًا (€)</label><input id="gSaved" class="field" type="number" value="${data.goal.saved}"><div class="actions"><button class="primary" onclick="saveGoal()">حفظ</button><button class="secondary" onclick="closeModal()">إلغاء</button></div>`)}
 function saveGoal(){data.goal={name:gName.value||'شراء منزل',target:+gTarget.value||30000,saved:+gSaved.value||0};save();closeModal();render();toast('تم تحديث الهدف ✓')}
 function addSaving(){let a=+prompt('كم تريد إضافة إلى ادخار المنزل؟','100');if(a>0){data.goal.saved+=a;save();render();toast('تمت إضافة الادخار ✓')}}
+function deleteTransaction(id,type){if(!confirm('حذف هذه المعاملة؟'))return;let arr=type==='income'?data.incomes:data.expenses;data[type==='income'?'incomes':'expenses']=arr.filter(x=>x.id!==id);save();render();toast('تم حذف المعاملة ✓')}
+function toggleTheme(){document.body.classList.toggle('dark');localStorage.setItem('floosi_theme',document.body.classList.contains('dark')?'dark':'light');updateThemeBtn()}
+function updateThemeBtn(){let dark=document.body.classList.contains('dark');let b=document.getElementById('themeBtn');if(b)b.textContent=dark?'☀️':'🌙'}
+function initTheme(){if(localStorage.getItem('floosi_theme')==='dark')document.body.classList.add('dark');updateThemeBtn()}
 function go(p){page=p;render()}
 function toast(t){let x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}
+initTheme();
 render();
 </script>
 </body></html>
